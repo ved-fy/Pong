@@ -19,6 +19,22 @@ function Ball:reset()
     self.dy = math.random(-50, 50)
 end
 
+function Ball:collides(paddle)
+
+    -- Checking left edge of either is farther than the right if so no collision
+    if self.x > paddle.x + paddle.width or paddle.x > self.x + self.width then
+        return false
+    end
+
+    -- Check if bottom edge of either is grater than the top edge if so no collision
+    if self.y > paddle.y + paddle.height or paddle.y > self.y + self.height then
+        return false
+    end
+
+    -- if not there is a collision
+    return true
+end
+
 -- [[   Applies the velocity and position scled by delta time   ]]
 function Ball:update(dt)
     self.x = self.x + self.dx * dt

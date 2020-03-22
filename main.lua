@@ -20,6 +20,9 @@ function love.load()
 
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
+    -- Setting window title name
+    love.window.setTitle('Pong')
+
     -- RNG using os.time() as a base for random number generation
     math.randomseed(os.time())
 
@@ -77,6 +80,8 @@ function love.update(dt)
     elseif love.keyboard.isDown('s') then
             -- Add positive paddle speed to the current Y scaled by dt
         player1.dy = PADDLE_SPEED
+    else
+        player1.dy = 0
 end
 
     -- Player 2 movement
@@ -86,12 +91,53 @@ end
     elseif love.keyboard.isDown('down') then
             -- Add positive paddle speed to the current Y scaled by dt
         player2.dy = PADDLE_SPEED
+    else
+        player2.dy = 0
 end
 
     -- Ball movement if we are in play state
     if gameState == 'play' then
+
         ball:update(dt)
+        -- Checking collision for player 1
+        if ball:collides(player1) then
+            ball.dx = -ball.dx * 1.03
+            ball.x = player1.x + 5
+            
+            -- Keep velocity going in the same direction but randomize it
+            if ball.dy < 0 then
+                ball.dy = -math.random(10,150)
+            else
+                ball.dy = math.random(10, 150)
+            end
+        end
+
+        -- Checking collision for player 2
+        if ball:collides(player2) then
+            ball.dx = -ball.dx * 1.03
+            ball.x = player2.x - 4
+
+            -- Keep velocity ging in the same direction but randomize it
+            if ball.dy < 0 then
+                ball.dy = -math.random(10,150)
+            else
+                ball.dy = math.random(10, 150)
+            end
+        end
+
+        -- Detect upper screen boundary collision and reverse the direction
+        if ball.y <= 0 then
+            ball.y = 0
+            ball.dy = -ball.dy
+        end
+
+        -- Detect lower screen boundaty collision and reeverse the direction
+        if ball.y >= VIRTUAL_HEIGHT - 4 then
+            ball.y = VIRTUAL_HEIGHT - 4
+            ball.dy = -ball.dy
+       end
     end
+
 
     player1:update(dt)
     player2:update(dt)
@@ -128,6 +174,17 @@ function love.draw()
     -- Render Ball
     ball:render()
 
+    -- Display FPS
+    displayFPS()
+
     -- end rendering at virtual resolution
     push:apply('end')
+end
+
+function displayFPS()
+    -- Simple FPS display across all states
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0, 255, 0, 255)
+    -- The .. operator is used to do string concatination in lua
+    love.graphics.print('FPS : ' .. tostring(love.timer.getFPS()), 10, 10)
 end

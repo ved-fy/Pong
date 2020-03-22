@@ -13,6 +13,9 @@ function love.load()
 
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
+    -- RNG using os.time() as a base for random number generation
+    math.randomseed(os.time())
+
     -- Get new font
     smallFont = love.graphics.newFont("font.ttf", 8)
     scoreFont = love.graphics.newFont("font.ttf", 32)
@@ -23,6 +26,14 @@ function love.load()
         vsync = true
     })
 
+    -- Ball position
+    ballX = VIRTUAL_WIDTH/2 - 2
+    ballY = VIRTUAL_HEIGHT/2 - 2
+
+    -- Ball vellocity
+    ballDx = math.random(2) == 1 and 100 or -100;
+    ballDy = math.random(-50, 50);
+
     -- Variables to store player scores
     Player1Score = 0
     Player2Score = 0
@@ -30,12 +41,33 @@ function love.load()
     -- Paddle position on the Y axis
     Player1Y = 30
     Player2Y = VIRTUAL_HEIGHT - 50
+
+    -- Game state variable used to switch between different parts of the game
+    -- Used for beginning menus, main game, highscore etc
+    gameState = 'start'
 end
 
 -- [[   Keyboard Handling, called by LOVE2D each frame  ]]
 function love.keypressed(key)
     if key == 'escape' then
         love.event.quit()
+    -- Checking for state changes
+    elseif key == "enter" or key == "return" then
+        if gameState == 'start' then
+            gameState = 'play'
+        
+        else
+            gameState = 'start'
+            
+            -- Start position of the ball to middle
+            ballX = VIRTUAL_WIDTH/2 - 2;
+            ballY = VIRTUAL_HEIGHT/2 - 2;
+            -- Give balls x and y a random vellocity
+            -- using a turnary operator
+            ballDx = math.random(2) == 1 and 100 or -100
+            ballDy = math.random(-50, 50) * 1.5
+
+        end
     end
 end
 
@@ -43,19 +75,25 @@ function love.update(dt)
     -- Player 1 movement
     if love.keyboard.isDown('w') then
         -- Add negetive paddle speed to current Y scaled by dt
-        Player1Y = Player1Y - PADDLE_SPEED * dt
+        Player1Y = math.max(0, Player1Y - PADDLE_SPEED * dt)
     elseif love.keyboard.isDown('s') then
             -- Add positive paddle speed to the current Y scaled by dt
-        Player1Y = Player1Y + PADDLE_SPEED * dt
+        Player1Y = math.min(VIRTUAL_HEIGHT - 20, Player1Y + PADDLE_SPEED * dt)
     end
 
     -- Player 2 movement
     if love.keyboard.isDown('up') then
         -- Add negetive paddle speed to current Y scaled by dt
-        Player2Y = Player2Y - PADDLE_SPEED * dt
+        Player2Y = math.max(0, Player2Y - PADDLE_SPEED * dt)
     elseif love.keyboard.isDown('down') then
             -- Add positive paddle speed to the current Y scaled by dt
-        Player2Y = Player2Y + PADDLE_SPEED * dt
+        Player2Y = math.min(VIRTUAL_HEIGHT - 20, Player2Y + PADDLE_SPEED * dt)
+    end
+
+    -- Ball movement if we are in play state
+    if gameState == 'play' then
+        ballX = ballX + ballDx * dt
+        ballY = ballY + ballDy * dt
     end
 end
 
@@ -70,7 +108,11 @@ function love.draw()
 
     -- draw welcome text toward the top of the screen
     love.graphics.setFont(smallFont)
-    love.graphics.printf('Hello Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+    if gameState == 'play' then
+        love.graphics.printf('Play Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+    elseif gameState == 'start' then
+        love.graphics.printf('Hello Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+    end
 
     -- Set font to score font to render font in bigger size
     love.graphics.setFont(scoreFont)
@@ -84,7 +126,7 @@ function love.draw()
     love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, Player2Y, 5, 20)
 
     -- render ball (center)
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
+    love.graphics.rectangle('fill', ballX, ballY, 4, 4)
 
     -- end rendering at virtual resolution
     push:apply('end')

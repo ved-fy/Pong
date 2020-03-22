@@ -1,5 +1,12 @@
 push = require 'push' -- Including push library
 
+Class = require 'class' -- Including class dierctory to bring in OOP concepts
+
+-- Adding ball class
+require 'Ball' 
+-- Adding paddle class
+require 'Paddle'
+
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
@@ -26,21 +33,17 @@ function love.load()
         vsync = true
     })
 
-    -- Ball position
-    ballX = VIRTUAL_WIDTH/2 - 2
-    ballY = VIRTUAL_HEIGHT/2 - 2
-
-    -- Ball vellocity
-    ballDx = math.random(2) == 1 and 100 or -100;
-    ballDy = math.random(-50, 50);
+    -- Creating ball object
+    ball = Ball(VIRTUAL_WIDTH/2 - 2, VIRTUAL_HEIGHT/2 - 2, 4, 4)
 
     -- Variables to store player scores
     Player1Score = 0
     Player2Score = 0
 
-    -- Paddle position on the Y axis
-    Player1Y = 30
-    Player2Y = VIRTUAL_HEIGHT - 50
+    -- Creating Player 1 and Player 2 paddles
+    player1 = Paddle(10, 30, 5, 20)
+    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
+    
 
     -- Game state variable used to switch between different parts of the game
     -- Used for beginning menus, main game, highscore etc
@@ -59,13 +62,8 @@ function love.keypressed(key)
         else
             gameState = 'start'
             
-            -- Start position of the ball to middle
-            ballX = VIRTUAL_WIDTH/2 - 2;
-            ballY = VIRTUAL_HEIGHT/2 - 2;
-            -- Give balls x and y a random vellocity
-            -- using a turnary operator
-            ballDx = math.random(2) == 1 and 100 or -100
-            ballDy = math.random(-50, 50) * 1.5
+            -- Reset ball position using reset()
+            ball:reset()
 
         end
     end
@@ -75,26 +73,28 @@ function love.update(dt)
     -- Player 1 movement
     if love.keyboard.isDown('w') then
         -- Add negetive paddle speed to current Y scaled by dt
-        Player1Y = math.max(0, Player1Y - PADDLE_SPEED * dt)
+        player1.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('s') then
             -- Add positive paddle speed to the current Y scaled by dt
-        Player1Y = math.min(VIRTUAL_HEIGHT - 20, Player1Y + PADDLE_SPEED * dt)
-    end
+        player1.dy = PADDLE_SPEED
+end
 
     -- Player 2 movement
     if love.keyboard.isDown('up') then
         -- Add negetive paddle speed to current Y scaled by dt
-        Player2Y = math.max(0, Player2Y - PADDLE_SPEED * dt)
+        player2.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('down') then
             -- Add positive paddle speed to the current Y scaled by dt
-        Player2Y = math.min(VIRTUAL_HEIGHT - 20, Player2Y + PADDLE_SPEED * dt)
-    end
+        player2.dy = PADDLE_SPEED
+end
 
     -- Ball movement if we are in play state
     if gameState == 'play' then
-        ballX = ballX + ballDx * dt
-        ballY = ballY + ballDy * dt
+        ball:update(dt)
     end
+
+    player1:update(dt)
+    player2:update(dt)
 end
 
 --[[  Called after update by LÖVE2D, used to draw anything to the screen, updated or otherwise. ]]
@@ -119,14 +119,14 @@ function love.draw()
     love.graphics.print(tostring(Player1Score), VIRTUAL_WIDTH/2 - 50, VIRTUAL_HEIGHT / 3)
     love.graphics.print(tostring(Player2Score), VIRTUAL_WIDTH/2 + 30, VIRTUAL_HEIGHT / 3)
 
-    -- render first paddle (left side)
-    love.graphics.rectangle('fill', 10, Player1Y, 5, 20)
+    -- Render Player 1 paddle
+    player1:render()
 
-    -- render second paddle (right side)
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, Player2Y, 5, 20)
-
-    -- render ball (center)
-    love.graphics.rectangle('fill', ballX, ballY, 4, 4)
+    -- Render Player 2 paddle
+    player2:render()
+    
+    -- Render Ball
+    ball:render()
 
     -- end rendering at virtual resolution
     push:apply('end')
